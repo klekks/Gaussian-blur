@@ -1,10 +1,5 @@
-import get_pass from './pass'
+//import get_pass from './blur'
 
-function helloWorld() {
-  const element = document.getElementById("hello-world");
-  if (element) {
-    element.textContent = get_pass();
-  }
-}
+window.onload = () => {
 
-helloWorld();
+};

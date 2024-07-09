@@ -49,14 +49,13 @@ function MyBlur(src: string) {
         direction = 1;
         let canvas = render(image);
         direction = 0;
-        var image2 = new Image();
 
-        image2.onload = () => {
-            let canvas2 = render(image2);
+        image.onload = () => {
+            let canvas2 = render(image);
             (document.getElementById("imgAfter") as HTMLImageElement).src = canvas2.toDataURL();
         }
 
-        image2.src = canvas.toDataURL();
+        image.src = canvas.toDataURL();
 
         
     }
@@ -74,6 +73,9 @@ function render(image: HTMLImageElement): HTMLCanvasElement {
 
     gl.canvas.width = image.width;
     gl.canvas.height = image.height;
+
+    if (image.width * image.height > 8000 * 4100)
+        alert("Images > 32800000 pixels in size cannot be displayed correctly.");
 
     // setup GLSL program
     var program = makeProgramFromShaders(gl, "vertex-shader-2d", "fragment-shader-2d");
@@ -198,7 +200,7 @@ function setRectangle(gl: WebGLRenderingContext, x: number, y: number, width: nu
 
 window.onload = () => {
     const fileInput = document.getElementById("fileInput")! as HTMLInputElement;
-    //const urlInput = document.getElementById("URLInput");
+    const urlInput = document.getElementById("URLInput")! as HTMLInputElement;
     const beforeImg = document.getElementById("imgBefore")! as HTMLImageElement;
     const afterImg = document.getElementById("imgAfter")! as HTMLImageElement;
     const blurButton = document.getElementById("blurButton")! as HTMLButtonElement;
@@ -206,19 +208,31 @@ window.onload = () => {
     const kernelSizeInput = document.getElementById("kernelSizeInput")! as HTMLInputElement;
     const sigmaInput = document.getElementById("sigmaInput")! as HTMLInputElement;
 
+    window.onresize = () =>
+    {
+        if (window.innerWidth < 1100)
+            alert("The window width of less than 1100 pixels is a bad idea.");
+    }
+
+    beforeImg.onload = () => {
+        console.log("123")
+        blurButton.removeAttribute("disabled");
+    };
+
+
     fileInput.onchange = () => {
+        beforeImg.src = 'media/loading.gif';
+
         const reader = new FileReader();
         reader.onload = () => {
             beforeImg.src = reader.result as string;
         };
-        blurButton.removeAttribute("disabled");
         reader.readAsDataURL(fileInput.files![0]);
-
     };
 
     blurButton.onclick = () => {
         console.log("click");
-        afterImg.src = 'https://usagif.com/wp-content/uploads/loading-78.gif';
+        afterImg.src = 'media/loading.gif';
         MyBlur(beforeImg.src);
     };
 
@@ -234,6 +248,31 @@ window.onload = () => {
         sigma = Number(sigmaInput.value);
         document.getElementById("sigmaLabel")!.innerText = "Sigma: " + String(sigma);
 
+    };
+
+    urlInput.onchange = () => {
+        beforeImg.src = 'media/loading.gif';
+
+        function toDataURL(url: string, callback: CallableFunction) {
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function () {
+                var reader = new FileReader();
+                reader.onloadend = function () {
+                    callback(reader.result);
+                }
+                reader.readAsDataURL(xhr.response);
+            };
+
+            xhr.open('GET', url);
+            xhr.responseType = 'blob';
+            
+            xhr.send();
+            
+        }
+
+        toDataURL('https://cors-anywhere.herokuapp.com/' + urlInput.value, function (dataUrl: string) {
+            beforeImg.src = dataUrl
+        })
     };
 
 };

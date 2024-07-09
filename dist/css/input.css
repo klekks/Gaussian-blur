@@ -10,16 +10,13 @@ body
   overflow: hidden;
 }
 
-#labelContainer
-{
-  display: flex;
-  background-color: #410060;
-
-  height: 20vh;
-  width: 50%;
-
-  border: dashed 3px #7d25a7;
-  margin: 5vh auto;
+#labelContainer {
+    display: inline-flex;
+    background-color: #410060;
+    border: dashed 3px #7d25a7;
+    height: 20vh;
+    width: 50%;
+    margin: 5vh 5vw;
 }
 
 #leftSide
@@ -34,7 +31,7 @@ body
   display: block;
   width: 80%;
   height: 30px;
-  margin: 10% 10% 25px 10%;
+  margin: 4vh 10% 25px 10%;
 
   color:  #a448c2;
   font-size: 18px;
@@ -120,7 +117,16 @@ svg
     background-color: #410060;
     border: dashed 2px #7d25a7;
     color: #a448c2;
+}
+
+button:enabled
+{
     cursor: pointer;
+}
+
+button:disabled
+{
+    cursor: not-allowed;
 }
 
 #buttonHolder > button:hover
@@ -140,3 +146,40 @@ svg
   border: dashed 3px #7d25a7;
 
 }
+
+#settingsHolder {
+    display: inline-flex;
+    margin: 5vh 3vw;
+    width: 25%;
+    height: 20vh;
+    background-color: #410060;
+    border: dashed 3px #7d25a7;
+    min-width: 350px;
+}
+
+input[type="range"] {
+    display: inline-block;
+    width: 50%;
+    margin: 4vh 10px 2vh 10%;
+    overflow: hidden;
+    -webkit-appearance: none;
+    background-color: #2f0045;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+    height: 10px;
+    -webkit-appearance: none;
+    color: red;
+    margin-top: -1px;
+}
+
+input[type='range']::-webkit-slider-thumb {
+    width: 10px;
+    -webkit-appearance: none;
+    height: 10px;
+    cursor: ew-resize;
+    background: #7d25a7;
+    box-shadow: -160px 0 0 160px #53007a;
+}
+
+

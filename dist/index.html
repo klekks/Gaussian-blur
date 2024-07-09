@@ -1,32 +1,122 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <head>
+<head>
     <meta charset="utf-8">
     <title>Huawei Test Task</title>
 
     <link rel="stylesheet" href="css/reset.css">
     <link rel="stylesheet" href="css/input.css">
 
-    <script type="text/javascript" src="js/main.js"></script>
-  </head>
+    <script>var exports = {};</script>
+    <script type="text/javascript" src="js/webgl.js"></script>
+    <script type="text/javascript" src="js/blur.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>
+
+
+
+    <script id='vertex-shader-2d' type='x-shader/x-vertex'>
+        attribute vec2 a_position;
+        attribute vec2 a_texCoord;
+
+        uniform vec2 u_resolution; // передали ширину и высоту канвы
+
+        varying vec2 v_texCoord;
+
+        void main() {
+           // convert the rectangle from pixels to 0.0 to 1.0
+           vec2 zeroToOne = a_position / u_resolution;
+
+           // convert from 0->1 to 0->2
+           vec2 zeroToTwo = zeroToOne * 2.0;
+
+           // convert from 0->2 to -1->+1 (clipspace)
+           vec2 clipSpace = zeroToTwo - 1.0;
+
+           gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+
+           // pass the texCoord to the fragment shader
+           // The GPU will interpolate this value between points.
+           v_texCoord = a_texCoord;
+        }
+    </script>
+    <script id='fragment-shader-2d' type='x-shader/x-fragment'>
+        precision mediump float;
+
+        #define PI (3.1415926538)
+
+        // our texture
+        uniform sampler2D u_image;
+
+        // the texCoords passed in from the vertex shader.
+        varying vec2 v_texCoord;
+
+        uniform vec2 u_textureSize;
+        uniform int u_kernelSize;
+        uniform int u_horizontal;
+        uniform float u_sigma;
+
+        float Gaussian(float x, float sigma)
+        {
+            return (1.0 / (sigma * sqrt(2.0 * PI))) * exp(-(x * x / (2.0 * sigma * sigma)));
+        }
+
+        void main() {
+           const float MAX_ITERATIONS = 100.0;
+           vec2 onePixel = vec2(1.0, 1.0) / u_textureSize;
+           float kernelSize = float(u_kernelSize);
+
+           vec4 frag = vec4(0.0,0.0,0.0,0.0);
+           float gauss_sum = 0.0;
+
+           for (float i = 0.0; i < MAX_ITERATIONS; i += 1.0)
+           {
+                if (i > kernelSize) break;
+                float gauss =  Gaussian(i - kernelSize / 2.0, u_sigma);
+                vec2 currentPix;
+
+                gauss_sum += gauss;
+                if (u_horizontal == 1)
+                    currentPix = v_texCoord + vec2((i - kernelSize / 2.0) * onePixel.x, 0);
+                else
+                    currentPix = v_texCoord + vec2(0, (i - kernelSize / 2.0) * onePixel.y);
+
+                frag += texture2D(u_image, currentPix) * gauss;
+           }
+           gl_FragColor = frag / gauss_sum;
+        }
+    </script>
+    <img src="https://usagif.com/wp-content/uploads/loading-78.gif" style="display: none;"/>
+</head>
   <body>
-    <label for="fileInput" id="labelContainer">
-      <div id="leftSide">
-        <input type="file" accept="image/*" id="fileInput">
-        <input type="text" placeholder="Enter image URL here..." id="URLInput">
+      <div style="display: flex;">
+          <label for="fileInput" id="labelContainer">
+              <div id="leftSide">
+                  <input type="file" accept="image/*" id="fileInput">
+                  <input type="text" placeholder="Enter image URL here..." id="URLInput">
+              </div>
+              <div id="rightSide">
+                  <svg class="box__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 43.5"><path d="M48.4 26.5c-.9 0-1.7.7-1.7 1.7v11.6h-43.3v-11.6c0-.9-.7-1.7-1.7-1.7s-1.7.7-1.7 1.7v13.2c0 .9.7 1.7 1.7 1.7h46.7c.9 0 1.7-.7 1.7-1.7v-13.2c0-1-.7-1.7-1.7-1.7zm-24.5 6.1c.3.3.8.5 1.2.5.4 0 .9-.2 1.2-.5l10-11.6c.7-.7.7-1.7 0-2.4s-1.7-.7-2.4 0l-7.1 8.3v-25.3c0-.9-.7-1.7-1.7-1.7s-1.7.7-1.7 1.7v25.3l-7.1-8.3c-.7-.7-1.7-.7-2.4 0s-.7 1.7 0 2.4l10 11.6z"></path></svg>
+                  Drag & Drop image
+              </div>
+          </label>
+
+          <div id="settingsHolder">
+              <div style="width: 100%; height: 100%;">
+                  <input type="range" min="3" max="100" value="15" step="1" id="kernelSizeInput" />
+                  <label for="kernelSizeInput" id="kernelLabel">Kernel size: 5</label>
+                  <input type="range" min="0.5" max="50" value="1" step="0.5" id="sigmaInput" />
+                  <label for="sigmaInput" id="sigmaLabel">Sigma: 0.6</label>
+              </div>
+          </div>
       </div>
-      <div id="rightSide">
-        <svg class="box__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 43.5"><path d="M48.4 26.5c-.9 0-1.7.7-1.7 1.7v11.6h-43.3v-11.6c0-.9-.7-1.7-1.7-1.7s-1.7.7-1.7 1.7v13.2c0 .9.7 1.7 1.7 1.7h46.7c.9 0 1.7-.7 1.7-1.7v-13.2c0-1-.7-1.7-1.7-1.7zm-24.5 6.1c.3.3.8.5 1.2.5.4 0 .9-.2 1.2-.5l10-11.6c.7-.7.7-1.7 0-2.4s-1.7-.7-2.4 0l-7.1 8.3v-25.3c0-.9-.7-1.7-1.7-1.7s-1.7.7-1.7 1.7v25.3l-7.1-8.3c-.7-.7-1.7-.7-2.4 0s-.7 1.7 0 2.4l10 11.6z"></path></svg>
-        Drag & Drop image
-      </div>
-    </label>
+    
 
     <div id="imagesContainer">
       <div class="imageExample">
         <img src="https://smilepawn.ru/images/noimage.jpg" alt="" id="imgBefore" />
       </div>
       <div id="buttonHolder">
-        <button type="button" name="button" id="blurButton">&#8608; BLUR &#8608;</button>
+        <button type="button" name="button" id="blurButton" disabled >&#8608; BLUR &#8608;</button>
       </div>
       <div class="imageExample">
         <img src="https://smilepawn.ru/images/noimage.jpg" alt="" id="imgAfter" />

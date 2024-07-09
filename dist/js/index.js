@@ -1,20 +1,32 @@
 "use strict";
-//import blur from './blur'
 var kernelSize;
 var sigma;
 var direction;
+/**
+ *
+ * @param GL
+ * @param vertexShader
+ * @param fragmentShader
+ * @returns WebGLProgram
+ *
+ * Function for compiling WebGL shaders into WebGL program
+ */
 function makeProgramFromShaders(GL, vertexShader, fragmentShader) {
     var shaders = getShaders(GL, vertexShader, fragmentShader);
     var PROGRAM = GL.createProgram();
     GL.attachShader(PROGRAM, shaders.vertex);
     GL.attachShader(PROGRAM, shaders.fragment);
     GL.linkProgram(PROGRAM);
-    var vertexPositionAttribute = GL.getAttribLocation(PROGRAM, 'a_position');
-    //console.log(PROGRAM, vertexPositionAttribute);
-    //GL.enableVertexAttribArray(vertexPositionAttribute);
-    //GL.vertexAttribPointer(vertexPositionAttribute, 2, GL.FLOAT, false, 0, 0);
     return PROGRAM;
 }
+/**
+ *
+ * @param GL
+ * @param vertexShader
+ * @param fragmentShader
+ * @returns
+ * Function for compiling vertex shader and fragment shader
+ */
 function getShaders(GL, vertexShader, fragmentShader) {
     return {
         vertex: compileShader(GL, GL.VERTEX_SHADER, document.getElementById(vertexShader).textContent),
@@ -31,15 +43,16 @@ function compileShader(GL, type, source) {
 function MyBlur(src) {
     var image = new Image();
     image.onload = function () {
-        direction = 1;
+        if (image.width * image.height > 8000 * 4100)
+            alert("Images > 32800000 pixels in size cannot be displayed correctly after processinng.");
+        direction = 1; // horizontal mode
         var canvas = render(image);
-        direction = 0;
-        var image2 = new Image();
-        image2.onload = function () {
-            var canvas2 = render(image2);
-            document.getElementById("imgAfter").src = canvas2.toDataURL();
+        image.onload = function () {
+            direction = 0; // vertical mode
+            var canvas2 = render(image);
+            document.getElementById("imgAfter").src = canvas2.toDataURL(); // set result into img tag
         };
-        image2.src = canvas.toDataURL();
+        image.src = canvas.toDataURL(); // result of horizontal stage in base64
     };
     image.src = src;
 }
@@ -90,7 +103,6 @@ function render(image) {
     var textureSizeLocation = gl.getUniformLocation(program, "u_textureSize");
     var sigmaLocation = gl.getUniformLocation(program, "u_sigma");
     var directionLocation = gl.getUniformLocation(program, "u_horizontal");
-    //webglUtils.resizeCanvasToDisplaySize(gl.canvas);
     // Tell WebGL how to convert from clip space to pixels
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     // Clear the canvas
@@ -147,39 +159,61 @@ function setRectangle(gl, x, y, width, height) {
         x2, y2,
     ]), gl.STATIC_DRAW);
 }
-function makeFine(image_) {
-    MyBlur(image_.src);
-}
 window.onload = function () {
     var fileInput = document.getElementById("fileInput");
-    //const urlInput = document.getElementById("URLInput");
+    var urlInput = document.getElementById("URLInput");
     var beforeImg = document.getElementById("imgBefore");
     var afterImg = document.getElementById("imgAfter");
     var blurButton = document.getElementById("blurButton");
     var kernelSizeInput = document.getElementById("kernelSizeInput");
     var sigmaInput = document.getElementById("sigmaInput");
+    window.onresize = function () {
+        if (window.innerWidth < 1100)
+            alert("The window width of less than 1100 pixels is a bad idea.");
+    };
+    beforeImg.onload = function () {
+        blurButton.removeAttribute("disabled"); // we can blur image by button now
+    };
     fileInput.onchange = function () {
+        beforeImg.src = 'media/loading.gif'; // loader img
         var reader = new FileReader();
         reader.onload = function () {
-            beforeImg.src = reader.result;
-            //beforeImg.setAttribute("loaded", "");
+            beforeImg.src = reader.result; // load image in base64
         };
-        blurButton.removeAttribute("disabled");
         reader.readAsDataURL(fileInput.files[0]);
     };
     blurButton.onclick = function () {
-        console.log("click");
-        afterImg.src = 'https://usagif.com/wp-content/uploads/loading-78.gif';
-        makeFine(beforeImg);
+        afterImg.src = 'media/loading.gif'; // loader img
+        MyBlur(beforeImg.src);
     };
-    kernelSize = 5;
-    sigma = 0.6;
+    kernelSize = Number(kernelSizeInput.value);
+    sigma = Number(sigmaInput.value);
     kernelSizeInput.onmousemove = function () {
         kernelSize = Number(kernelSizeInput.value);
-        document.getElementById("kernelLabel").innerText = "Kernel size: " + String(kernelSize);
+        document.getElementById("kernelLabel").innerText = "Kernel size: " + String(kernelSize); // updating label in UI 
     };
     sigmaInput.onmousemove = function () {
         sigma = Number(sigmaInput.value);
-        document.getElementById("sigmaLabel").innerText = "Sigma: " + String(sigma);
+        document.getElementById("sigmaLabel").innerText = "Radius: " + String(sigma); // updating label in UI
+    };
+    urlInput.onchange = function () {
+        beforeImg.src = 'media/loading.gif'; // loader img
+        function toDataURL(url, callback) {
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function () {
+                var reader = new FileReader();
+                reader.onloadend = function () {
+                    callback(reader.result);
+                };
+                reader.readAsDataURL(xhr.response);
+            };
+            xhr.open('GET', url);
+            xhr.responseType = 'blob';
+            xhr.send();
+        }
+        // using cors-anywhere herokuapp as a proxy to avoid CORS policy
+        toDataURL('https://cors-anywhere.herokuapp.com/' + urlInput.value, function (dataUrl) {
+            beforeImg.src = dataUrl;
+        });
     };
 };

@@ -1,21 +1,38 @@
-//import blur from './blur'
+
 let kernelSize: number;
 let sigma: number;
 let direction: number;
 
+/**
+ * 
+ * @param GL
+ * @param vertexShader
+ * @param fragmentShader
+ * @returns WebGLProgram
+ * 
+ * Function for compiling WebGL shaders into WebGL program
+ */
 function makeProgramFromShaders(GL: WebGLRenderingContext, vertexShader: string, fragmentShader: string): WebGLProgram {
 
     const shaders = getShaders(GL, vertexShader, fragmentShader);
 
-    const PROGRAM = GL.createProgram()!;
+    const program = GL.createProgram()!;
 
-    GL.attachShader(PROGRAM, shaders.vertex);
-    GL.attachShader(PROGRAM, shaders.fragment);
-    GL.linkProgram(PROGRAM);
+    GL.attachShader(program, shaders.vertex);
+    GL.attachShader(program, shaders.fragment);
+    GL.linkProgram(program);
 
-    return PROGRAM;
+    return program;
 }
 
+/**
+ * 
+ * @param GL
+ * @param vertexShader
+ * @param fragmentShader
+ * @returns
+ * Function for compiling vertex shader and fragment shader
+ */
 function getShaders(GL: WebGLRenderingContext, vertexShader: string, fragmentShader: string): { vertex: WebGLShader, fragment: WebGLShader } {
     return {
         vertex: compileShader(
@@ -31,6 +48,7 @@ function getShaders(GL: WebGLRenderingContext, vertexShader: string, fragmentSha
     };
 }
 
+
 function compileShader(GL: WebGLRenderingContext, type: number, source: string): WebGLShader {
     const shader = GL.createShader(type)!;
 
@@ -42,28 +60,32 @@ function compileShader(GL: WebGLRenderingContext, type: number, source: string):
     return shader;
 }
 
-function MyBlur(src: string) {
+
+function myBlurFunction(src: string) {
     var image = new Image();
     
     image.onload = () => {
-        direction = 1;
-        let canvas = render(image);
-        direction = 0;
+        if (image.width * image.height > 8000 * 4100)
+            alert("Images > 32800000 pixels in size cannot be displayed correctly after processinng.");
+
+        direction = 1; // horizontal mode
+        let canvas = makeTransformation(image);
 
         image.onload = () => {
-            let canvas2 = render(image);
-            (document.getElementById("imgAfter") as HTMLImageElement).src = canvas2.toDataURL();
+            direction = 0; // vertical mode
+            let canvas2 = makeTransformation(image);
+
+            (document.getElementById("imgAfter") as HTMLImageElement).src = canvas2.toDataURL(); // set result into img tag
         }
 
-        image.src = canvas.toDataURL();
-
-        
+        image.src = canvas.toDataURL(); // result of horizontal stage in base64
     }
 
     image.src = src;
 }
 
-function render(image: HTMLImageElement): HTMLCanvasElement {
+function makeTransformation(image: HTMLImageElement): HTMLCanvasElement
+{
     // Get A WebGL context
     var canvas = document.createElement("canvas")! as HTMLCanvasElement;
     var gl = canvas.getContext("webgl");
@@ -73,9 +95,6 @@ function render(image: HTMLImageElement): HTMLCanvasElement {
 
     gl.canvas.width = image.width;
     gl.canvas.height = image.height;
-
-    if (image.width * image.height > 8000 * 4100)
-        alert("Images > 32800000 pixels in size cannot be displayed correctly.");
 
     // setup GLSL program
     var program = makeProgramFromShaders(gl, "vertex-shader-2d", "fragment-shader-2d");
@@ -123,9 +142,7 @@ function render(image: HTMLImageElement): HTMLCanvasElement {
     var textureSizeLocation = gl.getUniformLocation(program, "u_textureSize");
     var sigmaLocation = gl.getUniformLocation(program, "u_sigma");
     var directionLocation = gl.getUniformLocation(program, "u_horizontal");
-
-
-    //webglUtils.resizeCanvasToDisplaySize(gl.canvas);
+    
 
     // Tell WebGL how to convert from clip space to pixels
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -215,25 +232,23 @@ window.onload = () => {
     }
 
     beforeImg.onload = () => {
-        console.log("123")
-        blurButton.removeAttribute("disabled");
+        blurButton.removeAttribute("disabled"); // we can blur image by button now
     };
 
 
     fileInput.onchange = () => {
-        beforeImg.src = 'media/loading.gif';
+        beforeImg.src = 'media/loading.gif'; // loader img
 
         const reader = new FileReader();
         reader.onload = () => {
-            beforeImg.src = reader.result as string;
+            beforeImg.src = reader.result as string; // load image in base64
         };
         reader.readAsDataURL(fileInput.files![0]);
     };
 
     blurButton.onclick = () => {
-        console.log("click");
-        afterImg.src = 'media/loading.gif';
-        MyBlur(beforeImg.src);
+        afterImg.src = 'media/loading.gif'; // loader img
+        myBlurFunction(beforeImg.src);
     };
 
     kernelSize = Number(kernelSizeInput.value);
@@ -241,19 +256,20 @@ window.onload = () => {
 
     kernelSizeInput.onmousemove = () => {
         kernelSize = Number(kernelSizeInput.value);
-        document.getElementById("kernelLabel")!.innerText = "Kernel size: " + String(kernelSize);
+        document.getElementById("kernelLabel")!.innerText = "Kernel size: " + String(kernelSize); // updating label in UI 
     };
 
     sigmaInput.onmousemove = () => {
         sigma = Number(sigmaInput.value);
-        document.getElementById("sigmaLabel")!.innerText = "Sigma: " + String(sigma);
+        document.getElementById("sigmaLabel")!.innerText = "Radius: " + String(sigma); // updating label in UI
 
     };
 
     urlInput.onchange = () => {
-        beforeImg.src = 'media/loading.gif';
+        beforeImg.src = 'media/loading.gif'; // loader img
 
-        function toDataURL(url: string, callback: CallableFunction) {
+        function toDataURL(url: string, callback: CallableFunction) // convert image [URL -> Base64Image]
+        {
             var xhr = new XMLHttpRequest();
             xhr.onload = function () {
                 var reader = new FileReader();
@@ -267,9 +283,9 @@ window.onload = () => {
             xhr.responseType = 'blob';
             
             xhr.send();
-            
         }
 
+        // using cors-anywhere herokuapp as a proxy to avoid CORS policy
         toDataURL('https://cors-anywhere.herokuapp.com/' + urlInput.value, function (dataUrl: string) {
             beforeImg.src = dataUrl
         })

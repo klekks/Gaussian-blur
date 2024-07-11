@@ -188,11 +188,11 @@ window.onload = function () {
     };
     kernelSize = Number(kernelSizeInput.value);
     sigma = Number(sigmaInput.value);
-    kernelSizeInput.onmousemove = function () {
+    kernelSizeInput.oninput = function () {
         kernelSize = Number(kernelSizeInput.value);
         document.getElementById("kernelLabel").innerText = "Kernel size: " + String(kernelSize); // updating label in UI 
     };
-    sigmaInput.onmousemove = function () {
+    sigmaInput.oninput = function () {
         sigma = Number(sigmaInput.value);
         document.getElementById("sigmaLabel").innerText = "Radius: " + String(sigma); // updating label in UI
     };

@@ -186,8 +186,7 @@ window.onload = function () {
         afterImg.src = 'media/loading.gif'; // loader img
         MyBlur(beforeImg.src);
     };
-    kernelSize = Number(kernelSizeInput.value);
-    sigma = Number(sigmaInput.value);
+
     kernelSizeInput.oninput = function () {
         kernelSize = Number(kernelSizeInput.value);
         document.getElementById("kernelLabel").innerText = "Kernel size: " + String(kernelSize); // updating label in UI 
@@ -196,6 +195,9 @@ window.onload = function () {
         sigma = Number(sigmaInput.value);
         document.getElementById("sigmaLabel").innerText = "Radius: " + String(sigma); // updating label in UI
     };
+    sigmaInput.oninput();
+    kernelSizeInput.oninput();
+    
     urlInput.onchange = function () {
         beforeImg.src = 'media/loading.gif'; // loader img
         function toDataURL(url, callback) {

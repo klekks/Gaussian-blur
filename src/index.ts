@@ -251,9 +251,6 @@ window.onload = () => {
         myBlurFunction(beforeImg.src);
     };
 
-    kernelSize = Number(kernelSizeInput.value);
-    sigma = Number(sigmaInput.value);
-
     kernelSizeInput.oninput = () => {
         kernelSize = Number(kernelSizeInput.value);
         document.getElementById("kernelLabel")!.innerText = "Kernel size: " + String(kernelSize); // updating label in UI 
@@ -262,8 +259,9 @@ window.onload = () => {
     sigmaInput.oninput = () => {
         sigma = Number(sigmaInput.value);
         document.getElementById("sigmaLabel")!.innerText = "Radius: " + String(sigma); // updating label in UI
-
     };
+    kernelSizeInput.oninput();
+    sigmaInput.oninput();
 
     urlInput.onchange = () => {
         beforeImg.src = 'media/loading.gif'; // loader img

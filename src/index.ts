@@ -2,7 +2,7 @@
 let kernelSize: number;
 let sigma: number;
 let direction: number;
-
+var program = null;
 /**
  * 
  * @param GL
@@ -13,15 +13,16 @@ let direction: number;
  * Function for compiling WebGL shaders into WebGL program
  */
 function makeProgramFromShaders(GL: WebGLRenderingContext, vertexShader: string, fragmentShader: string): WebGLProgram {
-
-    const shaders = getShaders(GL, vertexShader, fragmentShader);
-
-    const program = GL.createProgram()!;
-
-    GL.attachShader(program, shaders.vertex);
-    GL.attachShader(program, shaders.fragment);
-    GL.linkProgram(program);
-
+    if (!program)
+    {
+        const shaders = getShaders(GL, vertexShader, fragmentShader);
+    
+        program = GL.createProgram()!;
+    
+        GL.attachShader(program, shaders.vertex);
+        GL.attachShader(program, shaders.fragment);
+        GL.linkProgram(program);
+    }
     return program;
 }
 
